@@ -1,303 +1,286 @@
-# Code du Travail - Telegram Bot
+# Code du Travail - Assistant IA Multi-Plateforme
 
-🤖 Un bot Telegram intelligent basé sur un modèle Mistral 7B fine-tuné pour répondre aux questions sur le Code du Travail français.
+🤖 Assistant IA intelligent basé sur un modèle Mistral 7B fine-tuné pour répondre aux questions sur le Code du Travail français.
 
-## 🎯 Fonctionnalités
+## 🎯 Plateformes Disponibles
 
-- **IA Spécialisée**: Modèle Mistral 7B fine-tuné spécifiquement pour le droit du travail français
-- **Interface Telegram**: Interaction simple et intuitive via Telegram
-- **Optimisé GPU**: Support CUDA avec quantisation 4-bit pour optimiser l'utilisation mémoire
-- **Déploiement AWS**: Configuration prête pour instance EC2
-- **Monitoring**: Logs détaillés et informations système
+- 📱 **Bot Telegram** - Interaction instantanée et conversationnelle
+- 📧 **Bot Email** - Réponses détaillées par email avec Gmail
 
 ## 🚀 Installation Rapide
 
 ### Prérequis
-
 - Python 3.10+
-- CUDA 12.2+ (pour GPU)
-- Token de bot Telegram
-- Instance AWS r6i.xlarge (recommandée)
+- Instance AWS EC2 (r6i.xlarge recommandée)
+- Token bot Telegram + Compte Gmail configuré
 
-### 1. Cloner le repository
-
+### 1. **Clonage et Installation**
 ```bash
 git clone https://github.com/Pyzeur-ColonyLab/Code-du-Travail.git
 cd Code-du-Travail
-```
-
-### 2. Installation automatique (recommandée)
-
-```bash
 chmod +x setup.sh
 ./setup.sh
 ```
 
-### 3. Configuration
-
+### 2. **Configuration**
 ```bash
-# Copier le fichier d'exemple
 cp .env.example .env
-
-# Éditer et ajouter votre token Telegram
-nano .env
+vi .env
 ```
 
-Ajoutez votre token dans le fichier `.env`:
+Configurez vos tokens :
 ```env
-TELEGRAM_BOT_TOKEN=votre_token_ici
+# Telegram
+TELEGRAM_BOT_TOKEN=votre_token_telegram
+
+# Email Gmail
+EMAIL_ADDRESS=votre-bot@gmail.com
+EMAIL_PASSWORD=mot_de_passe_application_gmail
+
+# HuggingFace (pour le modèle privé)
+HUGGING_FACE_TOKEN=votre_token_hf
 ```
 
-### 4. Lancement
+### 3. **Démarrage**
 
-#### Option A: Lancement direct
+#### **Bot Telegram**
 ```bash
-source venv/bin/activate
-python telegram_bot.py
+./start_bot.sh --background
+./status_bot.sh
 ```
 
-#### Option B: Avec le script de lancement
+#### **Bot Email**
 ```bash
-source venv/bin/activate
-python run.py
+./start_email_bot.sh --background
+tail -f email_bot.log
 ```
 
-#### Option C: Service systemd
+## 📋 Guides Détaillés
+
+- 📖 **[Guide de Démarrage Rapide](QUICK_START.md)** - Installation et configuration
+- 📧 **[Configuration Gmail](EMAIL_SETUP.md)** - Setup complet pour le bot email
+- 🛠️ **[Guide Technique](README.md)** - Documentation complète
+
+## 🎮 Utilisation
+
+### **Bot Telegram**
+1. Cherchez votre bot sur Telegram
+2. Envoyez `/start`
+3. Posez vos questions directement
+
+**Commandes disponibles :**
+- `/start` - Démarrer
+- `/help` - Aide
+- `/status` - État du système
+
+### **Bot Email**
+1. Envoyez un email à votre bot Gmail
+2. Sujet libre
+3. Réponse automatique dans 2-5 minutes
+
+**Format des réponses email :**
+- Introduction personnalisée
+- Réponse détaillée (jusqu'à 1000 tokens)
+- Avertissement juridique
+- Signature professionnelle
+
+## ⚙️ Caractéristiques Techniques
+
+### **Modèle IA**
+- **Base** : Mistral-7B-Instruct-v0.3
+- **Fine-tuning** : Adaptateur LoRA spécialisé Code du Travail
+- **Optimisations CPU** : Threading + MKL-DNN
+- **Performance** : 60-90 secondes par réponse sur CPU
+
+### **Paramètres de Génération**
+
+| Plateforme | max_tokens | temperature | top_p | top_k | Usage |
+|------------|------------|-------------|-------|-------|-------|
+| **Telegram** | 200 | 0.7 | 0.85 | 25 | Réponses rapides |
+| **Email** | 1000 | 0.7 | 0.95 | 75 | Réponses détaillées |
+
+### **Architecture**
+- **Déploiement** : AWS EC2 (r6i.xlarge)
+- **OS** : Amazon Linux / Ubuntu
+- **Stockage** : 120GB SSD
+- **RAM** : 30GB (modèle ~15GB + système)
+
+## 📊 Monitoring
+
+### **Scripts de Gestion**
 ```bash
-sudo systemctl start code-du-travail-bot.service
+# Telegram
+./start_bot.sh [--background]
+./stop_bot.sh
+./status_bot.sh
+
+# Email
+./start_email_bot.sh [--background]
+./stop_email_bot.sh
+
+# Monitoring
+python monitor.py [--continuous]
+python health_check.py [--json]
+
+# Maintenance
+./update_bot.sh
+```
+
+### **Logs**
+```bash
+# Telegram
+tail -f bot.log
+
+# Email
+tail -f email_bot.log
+
+# Système
+./status_bot.sh
+```
+
+## 🔧 Optimisations
+
+### **Performance CPU**
+- **Threading** : Utilise tous les cœurs CPU
+- **MKL-DNN** : Optimisations Intel
+- **Inference Mode** : PyTorch optimisé
+- **Cache** : KV cache activé
+
+### **Paramètres Optimisés**
+- **Réduction tokens** : 200-1000 selon plateforme
+- **Sampling efficace** : top_k réduit
+- **Pas de quantisation** : Évite ralentissement CPU
+
+## 🚀 Déploiement Production
+
+### **Services Systemd**
+```bash
+# Installation automatique via setup.sh
 sudo systemctl enable code-du-travail-bot.service
+sudo systemctl start code-du-travail-bot.service
 ```
 
-#### Option D: Docker
+### **Docker (Alternative)**
 ```bash
 docker-compose up -d
-```
-
-## 📋 Configuration Détaillée
-
-### Variables d'environnement
-
-| Variable | Description | Défaut |
-|----------|-------------|--------|
-| `TELEGRAM_BOT_TOKEN` | Token du bot Telegram | **Requis** |
-| `MODEL_NAME` | Nom du modèle HuggingFace | `Pyzeur/Code-du-Travail-mistral-finetune` |
-| `DEVICE` | Périphérique (auto/cuda/cpu) | `auto` |
-| `MAX_LENGTH` | Longueur maximale du contexte | `2048` |
-| `LOG_LEVEL` | Niveau de logging | `INFO` |
-
-### Paramètres de génération
-
-Le modèle utilise les paramètres suivants pour la génération:
-- **Temperature**: 0.7 (créativité modérée)
-- **Top-p**: 0.9 (nucleus sampling)
-- **Top-k**: 50 (limitation du vocabulaire)
-- **Max tokens**: 512 (longueur de réponse)
-
-## 🔧 Installation Manuelle
-
-### 1. Dépendances système
-
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install -y python3 python3-pip python3-venv git wget curl build-essential
-
-# Installation CUDA (pour GPU)
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
-sudo apt-get update
-sudo apt-get -y install cuda-toolkit-12-2
-```
-
-### 2. Environnement Python
-
-```bash
-# Créer un environnement virtuel
-python3 -m venv venv
-source venv/bin/activate
-
-# Installer les dépendances
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### 3. Configuration du bot Telegram
-
-1. **Créer un bot Telegram**:
-   - Contactez [@BotFather](https://t.me/botfather) sur Telegram
-   - Utilisez `/newbot` pour créer un nouveau bot
-   - Suivez les instructions et notez le token
-
-2. **Configurer le bot**:
-   ```bash
-   cp .env.example .env
-   # Éditer .env et ajouter votre token
-   ```
-
-## 🐳 Déploiement Docker
-
-### Build et lancement
-
-```bash
-# Build l'image
-docker build -t code-du-travail-bot .
-
-# Lancement avec Docker Compose
-docker-compose up -d
-
-# Vérifier les logs
 docker-compose logs -f
 ```
 
-### Configuration GPU pour Docker
-
-Assurez-vous d'avoir installé `nvidia-docker2`:
-
+### **Monitoring Continu**
 ```bash
-# Installation nvidia-docker2
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-sudo apt-get update
-sudo apt-get install -y nvidia-docker2
-sudo systemctl restart docker
+# Surveillance automatique
+python monitor.py --continuous --interval 60 &
+
+# Alertes système
+python health_check.py --json
 ```
 
-## 📊 Monitoring et Maintenance
+## 🛡️ Sécurité
 
-### Vérifier le statut
+### **Configuration Email**
+- Compte Gmail dédié
+- Authentification 2FA obligatoire
+- Mot de passe d'application
+- IMAP/SMTP sécurisé
 
+### **Tokens et Accès**
+- Variables d'environnement (.env)
+- Tokens HuggingFace privés
+- Accès modèle restreint
+
+### **Système**
+- Firewall AWS configuré
+- SSH sécurisé
+- Logs centralisés
+
+## 📈 Cas d'Usage
+
+### **Telegram - Usage Interactif**
+- ✅ Questions rapides
+- ✅ Clarifications immédiates
+- ✅ Conversation fluide
+- ✅ Références courtes
+
+### **Email - Usage Professionnel**
+- ✅ Analyses détaillées
+- ✅ Réponses documentées
+- ✅ Format professionnel
+- ✅ Historique email
+- ✅ Consultation approfondie
+
+## 🔄 Maintenance
+
+### **Mise à jour**
 ```bash
-# Statut du service
-sudo systemctl status code-du-travail-bot.service
-
-# Logs en temps réel
-tail -f bot.log
-
-# Logs du service systemd
-sudo journalctl -u code-du-travail-bot.service -f
+./update_bot.sh
 ```
 
-### Commandes du bot
-
-| Commande | Description |
-|----------|-------------|
-| `/start` | Démarrer et afficher l'aide |
-| `/help` | Afficher l'aide détaillée |
-| `/status` | Informations système et état du modèle |
-
-### Surveillance des ressources
-
-Le bot inclut un monitoring intégré accessible via `/status`:
-- Utilisation CPU et RAM
-- Espace disque
-- État du GPU (si disponible)
-- Statut du modèle
-
-## 🔍 Dépannage
-
-### Problèmes courants
-
-1. **Erreur "CUDA out of memory"**:
-   ```bash
-   # Réduire la taille du batch ou utiliser la quantisation
-   export USE_QUANTIZATION=true
-   export LOAD_IN_4BIT=true
-   ```
-
-2. **Token Telegram invalide**:
-   - Vérifiez le token dans `.env`
-   - Assurez-vous qu'il n'y a pas d'espaces
-
-3. **Modèle ne se charge pas**:
-   ```bash
-   # Vérifier la connexion internet
-   ping huggingface.co
-   
-   # Vider le cache
-   rm -rf ~/.cache/huggingface/
-   ```
-
-4. **Permissions insuffisantes**:
-   ```bash
-   # Donner les bonnes permissions
-   chmod +x setup.sh
-   chmod +x run.py
-   ```
-
-### Logs et débogage
-
+### **Sauvegarde**
 ```bash
-# Augmenter le niveau de logging
-export LOG_LEVEL=DEBUG
+# Configuration
+cp .env .env.backup
 
-# Lancer en mode debug
+# Logs
+tar -czf logs_backup.tar.gz *.log
+```
+
+### **Nettoyage**
+```bash
+# Logs volumineux
+truncate -s 0 bot.log email_bot.log
+
+# Cache modèle
+rm -rf ~/.cache/huggingface/
+```
+
+## 🆘 Dépannage
+
+### **Problèmes Courants**
+
+| Problème | Solution |
+|----------|----------|
+| Modèle ne charge pas | Vérifier token HuggingFace |
+| Bot Telegram muet | Vérifier TELEGRAM_BOT_TOKEN |
+| Email ne fonctionne pas | Suivre [EMAIL_SETUP.md](EMAIL_SETUP.md) |
+| Mémoire insuffisante | Utiliser instance plus grande |
+| Réponses lentes | Optimiser paramètres génération |
+
+### **Logs de Debug**
+```bash
+# Mode verbose
 python run.py --debug
 
-# Vérifier les dépendances
+# Vérification complète
 python run.py --check
+
+# Santé système
+python health_check.py
 ```
 
-## 🏗️ Architecture du Projet
+## 🎉 Résultats
 
-```
-Code-du-Travail/
-├── telegram_bot.py      # Bot principal
-├── config.py           # Configuration
-├── run.py              # Script de lancement
-├── requirements.txt    # Dépendances Python
-├── setup.sh           # Script d'installation
-├── Dockerfile         # Configuration Docker
-├── docker-compose.yml # Orchestration Docker
-├── .env.example       # Exemple de configuration
-└── README.md          # Documentation
-```
+### **Performance**
+- **Temps de réponse** : 60-90 secondes (CPU optimisé)
+- **Qualité** : Spécialisé Code du Travail français
+- **Disponibilité** : 24/7 sur AWS
+- **Plateformes** : Telegram + Email
 
-## 🔒 Sécurité
+### **Utilisateurs**
+- **Particuliers** : Questions rapides sur Telegram
+- **Professionnels** : Consultations détaillées par email
+- **Entreprises** : Intégration dans workflows
 
-- **Variables d'environnement**: Utilisez `.env` pour les tokens sensibles
-- **Firewall**: Limitez les accès réseau sur votre instance AWS
-- **Mises à jour**: Maintenez les dépendances à jour
-- **Monitoring**: Surveillez les logs pour détecter les anomalies
+## 📞 Support
 
-## 📈 Performance
-
-### Optimisations GPU
-
-- **Quantisation 4-bit**: Réduit l'utilisation mémoire de ~75%
-- **Device mapping automatique**: Optimise la répartition sur GPU
-- **Batch processing**: Traitement efficace des requêtes
-
-### Instance AWS recommandée
-
-- **Type**: r6i.xlarge ou supérieur
-- **RAM**: 32GB minimum
-- **Storage**: 120GB SSD
-- **GPU**: Optionnel mais recommandé (g4dn.xlarge)
-
-## 🤝 Contribution
-
-1. Fork le projet
-2. Créez votre branche (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. Committez vos changements (`git commit -am 'Ajout nouvelle fonctionnalité'`)
-4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
-5. Ouvrez une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
-
-## 🆘 Support
-
-- **Issues GitHub**: [Créer un ticket](https://github.com/Pyzeur-ColonyLab/Code-du-Travail/issues)
-- **Documentation**: Ce README contient toutes les informations nécessaires
-- **Logs**: Consultez `bot.log` pour le débogage
+- **Documentation** : Guides complets dans le repository
+- **Issues** : [GitHub Issues](https://github.com/Pyzeur-ColonyLab/Code-du-Travail/issues)
+- **Logs** : `tail -f bot.log` pour diagnostic
 
 ## ⚠️ Avertissement
 
-Ce bot fournit des informations à titre informatif uniquement. Pour des conseils juridiques précis concernant le Code du Travail, consultez un avocat spécialisé en droit du travail.
+Cet assistant fournit des informations à titre informatif uniquement. Pour des conseils juridiques précis concernant le Code du Travail, consultez un avocat spécialisé en droit du travail.
 
 ---
 
-**Modèle**: [Pyzeur/Code-du-Travail-mistral-finetune](https://huggingface.co/Pyzeur/Code-du-Travail-mistral-finetune)  
-**Développé par**: Pyzeur - ColonyLab
+**🏗️ Développé par Pyzeur - ColonyLab**  
+**🤖 Modèle**: [Code-du-Travail-mistral-finetune](https://huggingface.co/Pyzeur/Code-du-Travail-mistral-finetune)
