@@ -57,6 +57,11 @@ class MistralTelegramBot:
         logger.info("Loading model and tokenizer...")
         
         try:
+            # Get authentication token if available
+            use_auth_token = os.getenv('HUGGING_FACE_TOKEN')
+            if use_auth_token:
+                logger.info("Using HuggingFace authentication token")
+            
             # Configure quantization for memory efficiency on GPU
             if self.device == "cuda":
                 quantization_config = BitsAndBytesConfig(
@@ -71,7 +76,8 @@ class MistralTelegramBot:
             # Load tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.model_name,
-                trust_remote_code=True
+                trust_remote_code=True,
+                use_auth_token=use_auth_token
             )
             
             # Add pad token if it doesn't exist
@@ -84,7 +90,8 @@ class MistralTelegramBot:
                 quantization_config=quantization_config,
                 device_map="auto" if self.device == "cuda" else None,
                 torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-                trust_remote_code=True
+                trust_remote_code=True,
+                use_auth_token=use_auth_token
             )
             
             if self.device == "cpu":
