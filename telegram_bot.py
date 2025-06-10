@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Telegram Bot for Code du Travail - Mistral 7B Fine-tuned Model
+Telegram Bot for Code du Travail - Mistral 7B Fine-tuned Model (CPU Optimized)
 
 This bot integrates a fine-tuned Mistral 7B model with Telegram to answer
 questions about French labor law (Code du Travail).
@@ -18,6 +18,13 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from dotenv import load_dotenv
 import psutil
 import time
+
+# CPU Optimizations
+try:
+    import intel_extension_for_pytorch as ipex
+    IPEX_AVAILABLE = True
+except ImportError:
+    IPEX_AVAILABLE = False
 
 # Load environment variables
 load_dotenv()
@@ -39,9 +46,17 @@ class MistralTelegramBot:
         self.tokenizer = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model_name = "Pyzeur/Code-du-Travail-mistral-finetune"
-        self.base_model_name = "mistralai/Mistral-7B-Instruct-v0.3"  # Correct base model
+        self.base_model_name = "mistralai/Mistral-7B-Instruct-v0.3"
         self.max_length = 2048
         self.is_loading = False
+        
+        # CPU optimizations
+        if self.device == "cpu":
+            # Set optimal thread count for CPU
+            torch.set_num_threads(os.cpu_count())
+            # Enable MKL-DNN optimizations
+            torch.backends.mkldnn.enabled = True
+            logger.info(f"CPU optimization enabled: {os.cpu_count()} threads, IPEX: {IPEX_AVAILABLE}")
         
         # Get environment variables
         self.telegram_token = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -51,12 +66,12 @@ class MistralTelegramBot:
         logger.info(f"Initializing bot with device: {self.device}")
         
     async def load_model(self):
-        """Load the fine-tuned LoRA model and tokenizer"""
+        """Load the fine-tuned LoRA model and tokenizer with CPU optimizations"""
         if self.model is not None:
             return
             
         self.is_loading = True
-        logger.info("Loading LoRA model and tokenizer...")
+        logger.info("Loading LoRA model and tokenizer with CPU optimizations...")
         
         try:
             # Get authentication token if available
@@ -64,21 +79,13 @@ class MistralTelegramBot:
             if use_auth_token:
                 logger.info("Using HuggingFace authentication token")
             
-            # Configure quantization for memory efficiency
-            if self.device == "cuda":
-                quantization_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_compute_dtype=torch.float16,
-                    bnb_4bit_use_double_quant=True,
-                    bnb_4bit_quant_type="nf4"
-                )
-            else:
-                quantization_config = None
+            # NO quantization on CPU (it slows down)
+            quantization_config = None
             
-            # Load tokenizer from the correct base model
+            # Load tokenizer
             logger.info(f"Loading tokenizer from {self.base_model_name}...")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.base_model_name,  # Use correct base model for tokenizer
+                self.base_model_name,
                 trust_remote_code=True,
                 token=use_auth_token
             )
@@ -87,16 +94,24 @@ class MistralTelegramBot:
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             
-            # Load base model
-            logger.info(f"Loading base model {self.base_model_name}...")
+            # Load base model with CPU optimizations
+            logger.info(f"Loading base model {self.base_model_name} with CPU optimizations...")
             base_model = AutoModelForCausalLM.from_pretrained(
                 self.base_model_name,
-                quantization_config=quantization_config,
-                device_map="auto" if self.device == "cuda" else None,
-                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                torch_dtype=torch.float32,  # Use float32 for CPU
                 trust_remote_code=True,
-                token=use_auth_token
+                token=use_auth_token,
+                low_cpu_mem_usage=True,  # Optimize memory usage
+                use_cache=True  # Enable KV cache for faster inference
             )
+            
+            # Move to CPU
+            base_model = base_model.to(self.device)
+            
+            # Apply IPEX optimizations if available
+            if IPEX_AVAILABLE and self.device == "cpu":
+                logger.info("Applying Intel Extension for PyTorch optimizations...")
+                base_model = ipex.optimize(base_model)
             
             # Load LoRA adapter
             logger.info(f"Loading LoRA adapter from {self.model_name}...")
@@ -106,10 +121,18 @@ class MistralTelegramBot:
                 token=use_auth_token
             )
             
-            if self.device == "cpu":
-                self.model = self.model.to(self.device)
+            # Set to evaluation mode for inference
+            self.model.eval()
             
-            logger.info("LoRA model loaded successfully!")
+            # Enable inference mode optimizations
+            with torch.inference_mode():
+                # Warm up the model with a dummy input
+                logger.info("Warming up model...")
+                dummy_input = self.tokenizer("Test", return_tensors="pt", max_length=50)
+                with torch.no_grad():
+                    _ = self.model.generate(**dummy_input, max_new_tokens=10, do_sample=False)
+            
+            logger.info("LoRA model loaded and optimized successfully!")
             
         except Exception as e:
             logger.error(f"Error loading LoRA model: {e}")
@@ -118,15 +141,19 @@ class MistralTelegramBot:
             try:
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.base_model_name,
-                    quantization_config=quantization_config,
-                    device_map="auto" if self.device == "cuda" else None,
-                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                    torch_dtype=torch.float32,
                     trust_remote_code=True,
-                    token=use_auth_token
+                    token=use_auth_token,
+                    low_cpu_mem_usage=True,
+                    use_cache=True
                 )
-                if self.device == "cpu":
-                    self.model = self.model.to(self.device)
-                logger.info("Base model loaded successfully (without fine-tuning)")
+                self.model = self.model.to(self.device)
+                
+                if IPEX_AVAILABLE and self.device == "cpu":
+                    self.model = ipex.optimize(self.model)
+                
+                self.model.eval()
+                logger.info("Base model loaded and optimized successfully (without fine-tuning)")
             except Exception as fallback_error:
                 logger.error(f"Error loading fallback model: {fallback_error}")
                 raise
@@ -134,7 +161,7 @@ class MistralTelegramBot:
             self.is_loading = False
     
     def generate_response(self, question: str) -> str:
-        """Generate response using the fine-tuned model"""
+        """Generate response using the fine-tuned model with CPU optimizations"""
         if self.model is None or self.tokenizer is None:
             return "❌ Le modèle n'est pas encore chargé. Veuillez patienter..."
         
@@ -142,26 +169,34 @@ class MistralTelegramBot:
             # Format the prompt for Mistral v0.3
             prompt = f"<s>[INST] {question} [/INST]"
             
-            # Tokenize input
+            # Tokenize input with optimized settings
             inputs = self.tokenizer(
                 prompt,
                 return_tensors="pt",
                 truncation=True,
-                max_length=self.max_length // 2
+                max_length=self.max_length // 2,
+                padding=False  # No padding needed for single input
             ).to(self.device)
             
-            # Generate response
-            with torch.no_grad():
+            # CPU-optimized generation parameters
+            generation_config = {
+                "max_new_tokens": 256,  # Reduced for faster generation
+                "do_sample": True,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "top_k": 40,  # Reduced from 50
+                "repetition_penalty": 1.1,
+                "pad_token_id": self.tokenizer.eos_token_id,
+                "eos_token_id": self.tokenizer.eos_token_id,
+                "use_cache": True,  # Important for CPU
+                "num_beams": 1  # Greedy search is faster on CPU
+            }
+            
+            # Generate response with optimizations
+            with torch.inference_mode():  # Faster than no_grad for inference
                 outputs = self.model.generate(
                     **inputs,
-                    max_new_tokens=512,
-                    do_sample=True,
-                    temperature=0.7,
-                    top_p=0.9,
-                    top_k=50,
-                    repetition_penalty=1.1,
-                    pad_token_id=self.tokenizer.eos_token_id,
-                    eos_token_id=self.tokenizer.eos_token_id
+                    **generation_config
                 )
             
             # Decode response
@@ -188,10 +223,13 @@ class MistralTelegramBot:
             disk = psutil.disk_usage('/')
             
             info = f"📊 **Informations système:**\n\n"
-            info += f"🖥️ CPU: {cpu_percent}%\n"
+            info += f"🖥️ CPU: {cpu_percent}% ({os.cpu_count()} threads)\n"
             info += f"💾 RAM: {memory.percent}% ({memory.used // (1024**3)}GB / {memory.total // (1024**3)}GB)\n"
             info += f"💿 Disque: {disk.percent}% ({disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB)\n"
             info += f"🔧 Device: {self.device.upper()}\n"
+            
+            if IPEX_AVAILABLE and self.device == "cpu":
+                info += f"⚡ IPEX: Activé\n"
             
             if torch.cuda.is_available():
                 gpu_memory = torch.cuda.get_device_properties(0).total_memory // (1024**3)
@@ -201,9 +239,9 @@ class MistralTelegramBot:
             model_type = "Non chargé"
             if self.model:
                 if hasattr(self.model, 'peft_config'):
-                    model_type = "LoRA Fine-tuné (v0.3)"
+                    model_type = "LoRA Fine-tuné (v0.3, CPU Optimisé)"
                 else:
-                    model_type = "Base Model (v0.3)"
+                    model_type = "Base Model (v0.3, CPU Optimisé)"
             info += f"🤖 Modèle: {model_type}\n"
             
             return info
@@ -232,9 +270,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Load model if not already loaded
     if bot_instance.model is None and not bot_instance.is_loading:
-        await update.message.reply_text("🔄 Chargement du modèle en cours, veuillez patienter...")
+        await update.message.reply_text("🔄 Chargement du modèle optimisé en cours, veuillez patienter...")
         await bot_instance.load_model()
-        await update.message.reply_text("✅ Modèle chargé ! Vous pouvez maintenant poser vos questions.")
+        await update.message.reply_text("✅ Modèle chargé et optimisé ! Vous pouvez maintenant poser vos questions.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
@@ -280,10 +318,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     
     # Load model if not loaded
     if bot_instance.model is None:
-        await update.message.reply_text("🔄 Chargement du modèle...")
+        await update.message.reply_text("🔄 Chargement du modèle optimisé...")
         try:
             await bot_instance.load_model()
-            await update.message.reply_text("✅ Modèle chargé !")
+            await update.message.reply_text("✅ Modèle chargé et optimisé !")
         except Exception as e:
             await update.message.reply_text(f"❌ Erreur lors du chargement du modèle: {str(e)}")
             return
@@ -326,7 +364,7 @@ def main() -> None:
     application.add_error_handler(error_handler)
     
     # Start the bot
-    logger.info("Starting Telegram bot...")
+    logger.info("Starting optimized Telegram bot...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
