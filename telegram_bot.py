@@ -12,6 +12,7 @@ import asyncio
 from typing import Optional
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from peft import PeftModel, PeftConfig
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from dotenv import load_dotenv
@@ -38,6 +39,7 @@ class MistralTelegramBot:
         self.tokenizer = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model_name = "Pyzeur/Code-du-Travail-mistral-finetune"
+        self.base_model_name = "mistralai/Mistral-7B-Instruct-v0.1"  # Base model for LoRA
         self.max_length = 2048
         self.is_loading = False
         
@@ -49,12 +51,12 @@ class MistralTelegramBot:
         logger.info(f"Initializing bot with device: {self.device}")
         
     async def load_model(self):
-        """Load the fine-tuned model and tokenizer"""
+        """Load the fine-tuned LoRA model and tokenizer"""
         if self.model is not None:
             return
             
         self.is_loading = True
-        logger.info("Loading model and tokenizer...")
+        logger.info("Loading LoRA model and tokenizer...")
         
         try:
             # Get authentication token if available
@@ -62,7 +64,7 @@ class MistralTelegramBot:
             if use_auth_token:
                 logger.info("Using HuggingFace authentication token")
             
-            # Configure quantization for memory efficiency on GPU
+            # Configure quantization for memory efficiency
             if self.device == "cuda":
                 quantization_config = BitsAndBytesConfig(
                     load_in_4bit=True,
@@ -73,35 +75,61 @@ class MistralTelegramBot:
             else:
                 quantization_config = None
             
-            # Load tokenizer
+            # Load tokenizer from the LoRA adapter (it should use the base model's tokenizer)
+            logger.info("Loading tokenizer...")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name,
+                self.base_model_name,  # Use base model for tokenizer
                 trust_remote_code=True,
-                use_auth_token=use_auth_token
+                token=use_auth_token
             )
             
             # Add pad token if it doesn't exist
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             
-            # Load model
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_name,
+            # Load base model
+            logger.info("Loading base model...")
+            base_model = AutoModelForCausalLM.from_pretrained(
+                self.base_model_name,
                 quantization_config=quantization_config,
                 device_map="auto" if self.device == "cuda" else None,
                 torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
                 trust_remote_code=True,
-                use_auth_token=use_auth_token
+                token=use_auth_token
+            )
+            
+            # Load LoRA adapter
+            logger.info("Loading LoRA adapter...")
+            self.model = PeftModel.from_pretrained(
+                base_model,
+                self.model_name,
+                token=use_auth_token
             )
             
             if self.device == "cpu":
                 self.model = self.model.to(self.device)
             
-            logger.info("Model loaded successfully!")
+            logger.info("LoRA model loaded successfully!")
             
         except Exception as e:
             logger.error(f"Error loading model: {e}")
-            raise
+            # Fallback to base model only
+            logger.info("Falling back to base model without LoRA...")
+            try:
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    self.base_model_name,
+                    quantization_config=quantization_config,
+                    device_map="auto" if self.device == "cuda" else None,
+                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                    trust_remote_code=True,
+                    token=use_auth_token
+                )
+                if self.device == "cpu":
+                    self.model = self.model.to(self.device)
+                logger.info("Base model loaded successfully (without fine-tuning)")
+            except Exception as fallback_error:
+                logger.error(f"Error loading fallback model: {fallback_error}")
+                raise
         finally:
             self.is_loading = False
     
@@ -111,8 +139,8 @@ class MistralTelegramBot:
             return "❌ Le modèle n'est pas encore chargé. Veuillez patienter..."
         
         try:
-            # Format the prompt (adjust based on your fine-tuning format)
-            prompt = f"Question: {question}\nRéponse:"
+            # Format the prompt for Mistral
+            prompt = f"<s>[INST] {question} [/INST]"
             
             # Tokenize input
             inputs = self.tokenizer(
@@ -170,7 +198,13 @@ class MistralTelegramBot:
                 gpu_used = torch.cuda.memory_allocated(0) // (1024**3)
                 info += f"🎮 GPU: {gpu_used}GB / {gpu_memory}GB\n"
             
-            info += f"🤖 Modèle: {'Chargé' if self.model else 'Non chargé'}\n"
+            model_type = "Non chargé"
+            if self.model:
+                if hasattr(self.model, 'peft_config'):
+                    model_type = "LoRA Fine-tuné"
+                else:
+                    model_type = "Base Model"
+            info += f"🤖 Modèle: {model_type}\n"
             
             return info
             
