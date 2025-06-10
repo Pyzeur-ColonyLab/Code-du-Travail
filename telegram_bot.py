@@ -39,7 +39,7 @@ class MistralTelegramBot:
         self.tokenizer = None
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model_name = "Pyzeur/Code-du-Travail-mistral-finetune"
-        self.base_model_name = "mistralai/Mistral-7B-Instruct-v0.1"  # Base model for LoRA
+        self.base_model_name = "mistralai/Mistral-7B-Instruct-v0.3"  # Correct base model
         self.max_length = 2048
         self.is_loading = False
         
@@ -75,10 +75,10 @@ class MistralTelegramBot:
             else:
                 quantization_config = None
             
-            # Load tokenizer from the LoRA adapter (it should use the base model's tokenizer)
-            logger.info("Loading tokenizer...")
+            # Load tokenizer from the correct base model
+            logger.info(f"Loading tokenizer from {self.base_model_name}...")
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.base_model_name,  # Use base model for tokenizer
+                self.base_model_name,  # Use correct base model for tokenizer
                 trust_remote_code=True,
                 token=use_auth_token
             )
@@ -88,7 +88,7 @@ class MistralTelegramBot:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             
             # Load base model
-            logger.info("Loading base model...")
+            logger.info(f"Loading base model {self.base_model_name}...")
             base_model = AutoModelForCausalLM.from_pretrained(
                 self.base_model_name,
                 quantization_config=quantization_config,
@@ -99,7 +99,7 @@ class MistralTelegramBot:
             )
             
             # Load LoRA adapter
-            logger.info("Loading LoRA adapter...")
+            logger.info(f"Loading LoRA adapter from {self.model_name}...")
             self.model = PeftModel.from_pretrained(
                 base_model,
                 self.model_name,
@@ -112,7 +112,7 @@ class MistralTelegramBot:
             logger.info("LoRA model loaded successfully!")
             
         except Exception as e:
-            logger.error(f"Error loading model: {e}")
+            logger.error(f"Error loading LoRA model: {e}")
             # Fallback to base model only
             logger.info("Falling back to base model without LoRA...")
             try:
@@ -139,7 +139,7 @@ class MistralTelegramBot:
             return "❌ Le modèle n'est pas encore chargé. Veuillez patienter..."
         
         try:
-            # Format the prompt for Mistral
+            # Format the prompt for Mistral v0.3
             prompt = f"<s>[INST] {question} [/INST]"
             
             # Tokenize input
@@ -201,9 +201,9 @@ class MistralTelegramBot:
             model_type = "Non chargé"
             if self.model:
                 if hasattr(self.model, 'peft_config'):
-                    model_type = "LoRA Fine-tuné"
+                    model_type = "LoRA Fine-tuné (v0.3)"
                 else:
-                    model_type = "Base Model"
+                    model_type = "Base Model (v0.3)"
             info += f"🤖 Modèle: {model_type}\n"
             
             return info
