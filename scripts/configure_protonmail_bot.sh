@@ -49,11 +49,12 @@ fi
 # Check if bridge is running
 if ! pgrep -f protonmail-bridge > /dev/null; then
     warning "ProtonMail Bridge is not running. Starting it now..."
-    if [ -f "$HOME/start_protonmail_bridge.sh" ]; then
-        "$HOME/start_protonmail_bridge.sh"
+    if [ -f "scripts/start_protonmail_bridge.sh" ]; then
+        chmod +x scripts/start_protonmail_bridge.sh
+        ./scripts/start_protonmail_bridge.sh
         sleep 5
     else
-        error "Bridge startup script not found. Please run the installation script first."
+        error "Bridge startup script not found in scripts/ directory"
     fi
 fi
 
@@ -85,6 +86,20 @@ echo ""
 echo "=== ProtonMail Bot Configuration ==="
 echo ""
 
+# Check if bridge is responding
+log "Checking bridge connectivity..."
+if timeout 5 bash -c "echo >/dev/tcp/127.0.0.1/1143" 2>/dev/null; then
+    success "IMAP port 1143 is accessible"
+else
+    error "IMAP port 1143 is not accessible. Make sure ProtonMail Bridge is running and logged in."
+fi
+
+if timeout 5 bash -c "echo >/dev/tcp/127.0.0.1/1025" 2>/dev/null; then
+    success "SMTP port 1025 is accessible"
+else
+    error "SMTP port 1025 is not accessible. Make sure ProtonMail Bridge is running and logged in."
+fi
+
 # Get existing values from .env if they exist
 EXISTING_TELEGRAM_TOKEN=$(grep "^TELEGRAM_BOT_TOKEN=" .env 2>/dev/null | cut -d'=' -f2 || echo "")
 EXISTING_HF_TOKEN=$(grep "^HUGGING_FACE_TOKEN=" .env 2>/dev/null | cut -d'=' -f2 || echo "")
@@ -92,9 +107,12 @@ EXISTING_HF_TOKEN=$(grep "^HUGGING_FACE_TOKEN=" .env 2>/dev/null | cut -d'=' -f2
 # Ask for ProtonMail Bridge password
 echo "📧 ProtonMail Configuration:"
 echo "The ProtonMail Bridge generates a unique password for IMAP/SMTP access."
-echo "You need to:"
-echo "1. Make sure the bridge is logged into your account"
-echo "2. Get the bridge password (usually shown during first login)"
+echo ""
+echo "To get your bridge password:"
+echo "1. Run: protonmail-bridge --cli"
+echo "2. Login with your ProtonMail credentials"
+echo "3. The bridge will display a password for IMAP/SMTP"
+echo "4. Copy that password (usually 16 characters)"
 echo ""
 
 BRIDGE_PASSWORD=$(input "Enter your ProtonMail Bridge password: ")
@@ -103,12 +121,46 @@ if [ -z "$BRIDGE_PASSWORD" ]; then
     error "Bridge password is required"
 fi
 
+# Test the credentials
+log "Testing ProtonMail Bridge credentials..."
+python3 << EOF
+import imaplib
+import sys
+
+try:
+    print("Testing IMAP connection...")
+    mail = imaplib.IMAP4('127.0.0.1', 1143)
+    mail.starttls()
+    mail.login('davide.courtault@proton.me', '$BRIDGE_PASSWORD')
+    print("✅ IMAP login successful!")
+    
+    # List mailboxes
+    status, mailboxes = mail.list()
+    print(f"Found {len(mailboxes)} mailboxes")
+    
+    mail.logout()
+    
+except Exception as e:
+    print(f"❌ IMAP test failed: {e}")
+    print("Please check:")
+    print("1. ProtonMail Bridge is running")
+    print("2. You are logged into your ProtonMail account in the bridge")
+    print("3. The bridge password is correct")
+    sys.exit(1)
+EOF
+
+if [ $? -ne 0 ]; then
+    error "ProtonMail credentials test failed"
+fi
+
 # Update .env file with ProtonMail settings
 log "Updating .env file with ProtonMail configuration..."
 
 # Remove old email configurations
 sed -i '/^EMAIL_ADDRESS=/d' .env 2>/dev/null || true
 sed -i '/^EMAIL_PASSWORD=/d' .env 2>/dev/null || true
+sed -i '/^PROTONMAIL_/d' .env 2>/dev/null || true
+sed -i '/^EMAIL_/d' .env 2>/dev/null || true
 
 # Add ProtonMail configuration
 {
@@ -135,9 +187,10 @@ sed -i '/^EMAIL_PASSWORD=/d' .env 2>/dev/null || true
 
 success "ProtonMail configuration added to .env"
 
-# Test connection
-log "Testing ProtonMail connection..."
+# Test connection with the updated configuration
+log "Running comprehensive connection test..."
 if [ -f "scripts/test_protonmail_connection.sh" ]; then
+    chmod +x scripts/test_protonmail_connection.sh
     ./scripts/test_protonmail_connection.sh
 else
     warning "Connection test script not found"
@@ -154,9 +207,9 @@ echo "📤 SMTP: 127.0.0.1:1025"
 echo "🤖 AI Parameters: Optimized for complete and precise responses"
 echo ""
 echo "Next steps:"
-echo "1. Test the configuration: ./scripts/test_protonmail_connection.sh"
-echo "2. Start the email bot: ./start_protonmail_bot.sh"
-echo "3. Send a test email to: davide.courtault@proton.me"
+echo "1. Start the email bot: ./scripts/start_protonmail_email_bot.sh"
+echo "2. Send a test email to: davide.courtault@proton.me"
+echo "3. Monitor logs: tail -f logs/protonmail_email_bot.log"
 echo ""
 log "Configuration saved to .env file"
 log "Check logs in: $LOG_FILE"
