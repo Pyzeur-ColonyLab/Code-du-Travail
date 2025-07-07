@@ -44,7 +44,7 @@ A comprehensive AI system that provides expert assistance on French labor law th
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/code-du-travail-ai.git
+git clone https://github.com/Pyzeur-ColonyLab/Code-du-Travail.git
 cd code-du-travail-ai
 ```
 
