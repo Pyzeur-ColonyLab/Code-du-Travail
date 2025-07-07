@@ -29,29 +29,21 @@ print_step() {
     echo -e "${BLUE}[STEP]${NC} $1"
 }
 
-# Configuration
-PROJECT_DIR="/home/debian/Code-du-Travail"
+# Configuration - Use current directory or HOME
+PROJECT_DIR="${PWD:-$HOME/Code-du-Travail}"
 GITHUB_REPO="https://github.com/Pyzeur-ColonyLab/Code-du-Travail.git"
 
 print_info "Code du Travail AI Assistant - Instance Update"
 print_info "============================================="
 
 # Check if we're in the right directory
-if [ ! -d "$PROJECT_DIR" ]; then
-    print_error "Project directory not found: $PROJECT_DIR"
-    print_info "Please run this script from the correct location"
-    exit 1
-fi
-
-# Navigate to project directory
-cd "$PROJECT_DIR"
-
-# Check if this is a git repository
 if [ ! -d ".git" ]; then
-    print_error "Not a git repository. Please clone the repository first:"
-    print_info "git clone $GITHUB_REPO"
+    print_error "Not a git repository. Please run this script from the Code-du-Travail directory."
+    print_info "Current directory: $PWD"
     exit 1
 fi
+
+print_info "Using project directory: $PWD"
 
 # Stop services before updating
 print_step "Stopping services..."
@@ -69,6 +61,7 @@ print_step "Making scripts executable..."
 chmod +x start_mailserver_bot.sh
 chmod +x setup_mailserver.sh
 chmod +x deploy_infomaniak.sh
+chmod +x update_instance.sh
 
 # Check if .env file exists
 if [ ! -f ".env" ]; then
