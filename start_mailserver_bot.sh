@@ -44,15 +44,34 @@ check_docker_compose() {
     fi
 }
 
-# Function to check if .env file exists
-check_env_file() {
+# Function to safely load environment variables
+load_env_file() {
     if [ ! -f ".env" ]; then
         print_error ".env file not found. Please create one based on .env.example"
         exit 1
     fi
     
-    # Load environment variables
-    source .env
+    # Load environment variables safely by reading line by line
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip empty lines and comments
+        if [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]]; then
+            continue
+        fi
+        
+        # Check if line contains an assignment
+        if [[ "$line" =~ ^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*= ]]; then
+            # Export the variable safely
+            export "$line"
+        fi
+    done < ".env"
+}
+
+# Function to check if .env file exists and validate required variables
+check_env_file() {
+    print_step "Loading environment configuration..."
+    
+    # Load environment variables safely
+    load_env_file
     
     # Check required variables
     if [ -z "$EMAIL_DOMAIN" ]; then
@@ -71,6 +90,8 @@ check_env_file() {
     fi
     
     print_info "Configuration validated"
+    print_info "Domain: $EMAIL_DOMAIN"
+    print_info "Email: $EMAIL_ADDRESS"
 }
 
 # Function to create directories
@@ -227,4 +248,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"
