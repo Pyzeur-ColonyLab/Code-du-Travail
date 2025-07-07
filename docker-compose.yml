@@ -7,12 +7,25 @@ services:
     restart: unless-stopped
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - MODEL_NAME=Pyzeur/Code-du-Travail-mistral-finetune
-      - DEVICE=auto
-      - LOG_LEVEL=INFO
+      - MODEL_NAME=${MODEL_NAME:-Pyzeur/Code-du-Travail-mistral-finetune}
+      - DEVICE=${DEVICE:-auto}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - HUGGING_FACE_TOKEN=${HUGGING_FACE_TOKEN}
+      # Email settings for docker-mailserver
+      - EMAIL_ADDRESS=${EMAIL_ADDRESS}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_DOMAIN=${EMAIL_DOMAIN}
+      - IMAP_HOST=mailserver
+      - IMAP_PORT=993
+      - SMTP_HOST=mailserver
+      - SMTP_PORT=587
     volumes:
       - ./logs:/app/logs
       - ./cache:/root/.cache  # For model caching
+    depends_on:
+      - mailserver
+    networks:
+      - mail-network
     deploy:
       resources:
         reservations:
@@ -22,3 +35,43 @@ services:
               capabilities: [gpu]
     stdin_open: true
     tty: true
+
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:latest
+    container_name: mailserver
+    hostname: mail.${EMAIL_DOMAIN}
+    restart: unless-stopped
+    ports:
+      - "25:25"    # SMTP
+      - "143:143"  # IMAP
+      - "587:587"  # SMTP submission
+      - "993:993"  # IMAP SSL
+    volumes:
+      - ./docker-data/dms/mail-data/:/var/mail/
+      - ./docker-data/dms/mail-state/:/var/mail-state/
+      - ./docker-data/dms/mail-logs/:/var/log/mail/
+      - ./docker-data/dms/config/:/tmp/docker-mailserver/
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ENABLE_RSPAMD=1
+      - ENABLE_CLAMAV=1
+      - ENABLE_FAIL2BAN=1
+      - ENABLE_POSTGREY=1
+      - ENABLE_MANAGESIEVE=1
+      - POSTMASTER_ADDRESS=postmaster@${EMAIL_DOMAIN}
+      - SSL_TYPE=self-signed
+      - PERMIT_DOCKER=network
+      - SPOOF_PROTECTION=1
+      - ENABLE_SRS=1
+      - ONE_DIR=1
+      - DMS_DEBUG=0
+      - LOG_LEVEL=info
+    cap_add:
+      - NET_ADMIN
+      - SYS_PTRACE
+    networks:
+      - mail-network
+
+networks:
+  mail-network:
+    driver: bridge

@@ -1,286 +1,435 @@
-# Code du Travail - Assistant IA Multi-Plateforme
+# 🤖 Code du Travail AI Assistant
 
-🤖 Assistant IA intelligent basé sur un modèle Mistral 7B fine-tuné pour répondre aux questions sur le Code du Travail français.
+[![Docker](https://img.shields.io/badge/Docker-Required-blue.svg)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/Python-3.10+-green.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🎯 Plateformes Disponibles
+> **Intelligent AI Assistant for French Labor Law** - Powered by fine-tuned Mistral 7B model
 
-- 📱 **Bot Telegram** - Interaction instantanée et conversationnelle
-- 📧 **Bot Email** - Réponses détaillées par email avec Gmail
+A comprehensive AI system that provides expert assistance on French labor law through both **Telegram** and **Email** interfaces. Built with a fine-tuned Mistral 7B model specifically trained on the French Code du Travail.
 
-## 🚀 Installation Rapide
+## 🌟 Features
 
-### Prérequis
-- Python 3.10+
-- Instance AWS EC2 (r6i.xlarge recommandée)
-- Token bot Telegram + Compte Gmail configuré
+### 🤖 **Dual Interface Support**
+- **Telegram Bot**: Interactive chat interface for real-time assistance
+- **Email Bot**: Automated email processing with professional responses
+- **Simultaneous Operation**: Both bots can run concurrently
 
-### 1. **Clonage et Installation**
+### 🧠 **Advanced AI Capabilities**
+- **Fine-tuned Model**: Specialized `Pyzeur/Code-du-Travail-mistral-finetune` model
+- **LoRA Adapters**: Efficient fine-tuning approach for optimal performance
+- **GPU Acceleration**: CUDA support for faster inference
+- **Context-Aware**: Different parameters for chat vs. email responses
+
+### 📧 **Professional Email System**
+- **Docker-Mailserver**: Self-hosted, production-ready mail server
+- **Anti-spam Protection**: Built-in spam filtering and virus scanning
+- **SSL/TLS Security**: Encrypted email communications
+- **Multiple Domains**: Support for multiple email domains
+
+### 🔧 **Enterprise Features**
+- **Docker Containerization**: Easy deployment and scaling
+- **Persistent Storage**: Email data and model cache persistence
+- **Health Monitoring**: Built-in health checks and logging
+- **Security**: Fail2ban, authentication, and input validation
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Docker & Docker Compose**
+- **Domain name** (for email functionality)
+- **NVIDIA GPU** (recommended for optimal performance)
+- **Basic DNS knowledge**
+
+### 1. Clone Repository
 ```bash
-git clone https://github.com/Pyzeur-ColonyLab/Code-du-Travail.git
-cd Code-du-Travail
-chmod +x setup.sh
-./setup.sh
+git clone https://github.com/yourusername/code-du-travail-ai.git
+cd code-du-travail-ai
 ```
 
-### 2. **Configuration**
+### 2. Configure Environment
 ```bash
 cp .env.example .env
-vi .env
+# Edit .env with your settings
 ```
 
-Configurez vos tokens :
-```env
-# Telegram
-TELEGRAM_BOT_TOKEN=votre_token_telegram
-
-# Email Gmail
-EMAIL_ADDRESS=votre-bot@gmail.com
-EMAIL_PASSWORD=mot_de_passe_application_gmail
-
-# HuggingFace (pour le modèle privé)
-HUGGING_FACE_TOKEN=votre_token_hf
-```
-
-### 3. **Démarrage**
-
-#### **Bot Telegram**
+### 3. Start Services
 ```bash
-./start_bot.sh --background
-./status_bot.sh
+./start_mailserver_bot.sh start
 ```
 
-#### **Bot Email**
+### 4. Setup Email Accounts
 ```bash
-./start_email_bot.sh --background
-tail -f email_bot.log
+./start_mailserver_bot.sh setup
 ```
 
-## 📋 Guides Détaillés
+## 📋 Configuration
 
-- 📖 **[Guide de Démarrage Rapide](QUICK_START.md)** - Installation et configuration
-- 📧 **[Configuration Gmail](EMAIL_SETUP.md)** - Setup complet pour le bot email
-- 🛠️ **[Guide Technique](README.md)** - Documentation complète
+### Environment Variables
 
-## 🎮 Utilisation
-
-### **Bot Telegram**
-1. Cherchez votre bot sur Telegram
-2. Envoyez `/start`
-3. Posez vos questions directement
-
-**Commandes disponibles :**
-- `/start` - Démarrer
-- `/help` - Aide
-- `/status` - État du système
-
-### **Bot Email**
-1. Envoyez un email à votre bot Gmail
-2. Sujet libre
-3. Réponse automatique dans 2-5 minutes
-
-**Format des réponses email :**
-- Introduction personnalisée
-- Réponse détaillée (jusqu'à 1000 tokens)
-- Avertissement juridique
-- Signature professionnelle
-
-## ⚙️ Caractéristiques Techniques
-
-### **Modèle IA**
-- **Base** : Mistral-7B-Instruct-v0.3
-- **Fine-tuning** : Adaptateur LoRA spécialisé Code du Travail
-- **Optimisations CPU** : Threading + MKL-DNN
-- **Performance** : 60-90 secondes par réponse sur CPU
-
-### **Paramètres de Génération**
-
-| Plateforme | max_tokens | temperature | top_p | top_k | Usage |
-|------------|------------|-------------|-------|-------|-------|
-| **Telegram** | 200 | 0.7 | 0.85 | 25 | Réponses rapides |
-| **Email** | 1000 | 0.7 | 0.95 | 75 | Réponses détaillées |
-
-### **Architecture**
-- **Déploiement** : AWS EC2 (r6i.xlarge)
-- **OS** : Amazon Linux / Ubuntu
-- **Stockage** : 120GB SSD
-- **RAM** : 30GB (modèle ~15GB + système)
-
-## 📊 Monitoring
-
-### **Scripts de Gestion**
+#### Required Settings
 ```bash
-# Telegram
-./start_bot.sh [--background]
-./stop_bot.sh
-./status_bot.sh
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 
-# Email
-./start_email_bot.sh [--background]
-./stop_email_bot.sh
+# Email Configuration
+EMAIL_DOMAIN=yourdomain.com
+EMAIL_ADDRESS=bot@yourdomain.com
+EMAIL_PASSWORD=your_secure_password
 
-# Monitoring
-python monitor.py [--continuous]
-python health_check.py [--json]
-
-# Maintenance
-./update_bot.sh
+# AI Model
+MODEL_NAME=Pyzeur/Code-du-Travail-mistral-finetune
+HUGGING_FACE_TOKEN=your_hugging_face_token
 ```
 
-### **Logs**
+#### Optional Settings
 ```bash
-# Telegram
-tail -f bot.log
+# Device Configuration
+DEVICE=auto                    # auto, cpu, cuda
 
-# Email
-tail -f email_bot.log
+# Email AI Parameters
+EMAIL_MAX_TOKENS=1500          # Longer responses for emails
+EMAIL_TEMPERATURE=0.3          # More conservative for emails
+EMAIL_CHECK_INTERVAL=30        # Check emails every 30 seconds
 
-# Système
-./status_bot.sh
+# Telegram AI Parameters
+TELEGRAM_MAX_TOKENS=512        # Shorter responses for chat
+TELEGRAM_TEMPERATURE=0.7       # More conversational
 ```
 
-## 🔧 Optimisations
+### DNS Configuration
 
-### **Performance CPU**
-- **Threading** : Utilise tous les cœurs CPU
-- **MKL-DNN** : Optimisations Intel
-- **Inference Mode** : PyTorch optimisé
-- **Cache** : KV cache activé
+Configure these DNS records for your domain:
 
-### **Paramètres Optimisés**
-- **Réduction tokens** : 200-1000 selon plateforme
-- **Sampling efficace** : top_k réduit
-- **Pas de quantisation** : Évite ralentissement CPU
+```dns
+# A record for mail server
+mail.yourdomain.com.    IN  A       YOUR_SERVER_IP
 
-## 🚀 Déploiement Production
+# MX record for email routing
+yourdomain.com.         IN  MX  10  mail.yourdomain.com.
 
-### **Services Systemd**
-```bash
-# Installation automatique via setup.sh
-sudo systemctl enable code-du-travail-bot.service
-sudo systemctl start code-du-travail-bot.service
+# SPF record for email authentication
+yourdomain.com.         IN  TXT     "v=spf1 mx ~all"
 ```
 
-### **Docker (Alternative)**
-```bash
-docker-compose up -d
-docker-compose logs -f
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Telegram Bot  │    │   Email Bot     │    │  Fine-tuned     │
+│                 │    │                 │    │  Mistral 7B     │
+│ • Interactive   │    │ • IMAP Monitor  │    │ • LoRA Adapters │
+│ • Real-time     │    │ • Auto-Reply    │    │ • GPU Support   │
+│ • Multi-user    │    │ • Professional  │    │ • Optimized     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │ Docker-Mailserver│
+                    │                 │
+                    │ • SMTP/IMAP     │
+                    │ • Anti-spam     │
+                    │ • SSL/TLS       │
+                    │ • Multi-domain  │
+                    └─────────────────┘
 ```
 
-### **Monitoring Continu**
-```bash
-# Surveillance automatique
-python monitor.py --continuous --interval 60 &
+## 🎯 Usage
 
-# Alertes système
-python health_check.py --json
+### Management Commands
+
+```bash
+# Start all services
+./start_mailserver_bot.sh start
+
+# Check service status
+./start_mailserver_bot.sh status
+
+# View logs
+./start_mailserver_bot.sh logs
+
+# Stop services
+./start_mailserver_bot.sh stop
+
+# Restart services
+./start_mailserver_bot.sh restart
+
+# Setup email accounts
+./start_mailserver_bot.sh setup
 ```
 
-## 🛡️ Sécurité
+### Bot Modes
 
-### **Configuration Email**
-- Compte Gmail dédié
-- Authentification 2FA obligatoire
-- Mot de passe d'application
-- IMAP/SMTP sécurisé
-
-### **Tokens et Accès**
-- Variables d'environnement (.env)
-- Tokens HuggingFace privés
-- Accès modèle restreint
-
-### **Système**
-- Firewall AWS configuré
-- SSH sécurisé
-- Logs centralisés
-
-## 📈 Cas d'Usage
-
-### **Telegram - Usage Interactif**
-- ✅ Questions rapides
-- ✅ Clarifications immédiates
-- ✅ Conversation fluide
-- ✅ Références courtes
-
-### **Email - Usage Professionnel**
-- ✅ Analyses détaillées
-- ✅ Réponses documentées
-- ✅ Format professionnel
-- ✅ Historique email
-- ✅ Consultation approfondie
-
-## 🔄 Maintenance
-
-### **Mise à jour**
 ```bash
-./update_bot.sh
-```
+# Run both bots (default)
+python run.py --mode both
 
-### **Sauvegarde**
-```bash
-# Configuration
-cp .env .env.backup
+# Run only Telegram bot
+python run.py --mode telegram
 
-# Logs
-tar -czf logs_backup.tar.gz *.log
-```
+# Run only email bot
+python run.py --mode email
 
-### **Nettoyage**
-```bash
-# Logs volumineux
-truncate -s 0 bot.log email_bot.log
-
-# Cache modèle
-rm -rf ~/.cache/huggingface/
-```
-
-## 🆘 Dépannage
-
-### **Problèmes Courants**
-
-| Problème | Solution |
-|----------|----------|
-| Modèle ne charge pas | Vérifier token HuggingFace |
-| Bot Telegram muet | Vérifier TELEGRAM_BOT_TOKEN |
-| Email ne fonctionne pas | Suivre [EMAIL_SETUP.md](EMAIL_SETUP.md) |
-| Mémoire insuffisante | Utiliser instance plus grande |
-| Réponses lentes | Optimiser paramètres génération |
-
-### **Logs de Debug**
-```bash
-# Mode verbose
+# Debug mode
 python run.py --debug
-
-# Vérification complète
-python run.py --check
-
-# Santé système
-python health_check.py
 ```
 
-## 🎉 Résultats
+### Email Management
 
-### **Performance**
-- **Temps de réponse** : 60-90 secondes (CPU optimisé)
-- **Qualité** : Spécialisé Code du Travail français
-- **Disponibilité** : 24/7 sur AWS
-- **Plateformes** : Telegram + Email
+```bash
+# Create email account
+./setup_mailserver.sh create-account user@domain.com password
 
-### **Utilisateurs**
-- **Particuliers** : Questions rapides sur Telegram
-- **Professionnels** : Consultations détaillées par email
-- **Entreprises** : Intégration dans workflows
+# Create email alias
+./setup_mailserver.sh create-alias support@domain.com user@domain.com
+
+# List accounts
+./setup_mailserver.sh list-accounts
+```
+
+## 🏢 Infomaniak Cloud Optimization
+
+This system is optimized for **Infomaniak Public Cloud** instances. Here are the specific optimizations:
+
+### Instance Configuration
+
+```bash
+# Recommended Infomaniak instance specs
+Flavor: a2-ram4-disk50-perf1  # 4GB RAM, 50GB disk
+Image: Debian 11.5 bullseye
+Security Group: Open ports 25, 587, 993, 465
+```
+
+### Security Group Setup
+
+```bash
+# Create security group for mail server
+openstack security group create --description "Mail Server Ports" mailserver-sec
+
+# Add required rules
+openstack security group rule create --dst-port 25 --protocol TCP mailserver-sec
+openstack security group rule create --dst-port 587 --protocol TCP mailserver-sec
+openstack security group rule create --dst-port 993 --protocol TCP mailserver-sec
+openstack security group rule create --dst-port 465 --protocol TCP mailserver-sec
+openstack security group rule create --dst-port 22 --protocol TCP mailserver-sec
+```
+
+### Performance Optimization
+
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Install Docker Compose
+sudo apt install docker-compose-plugin -y
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+```
+
+### Resource Management
+
+The system is optimized for Infomaniak's resource constraints:
+
+- **Memory**: Efficient model loading with shared memory between bots
+- **Storage**: Optimized Docker layers and persistent volume management
+- **Network**: Internal Docker networking for secure communication
+- **CPU**: Multi-threading support for concurrent bot operation
+
+## 🔧 Advanced Configuration
+
+### Custom AI Parameters
+
+```bash
+# Email responses (detailed and professional)
+EMAIL_TEMPERATURE=0.3
+EMAIL_TOP_P=0.95
+EMAIL_MAX_TOKENS=1500
+EMAIL_REPETITION_PENALTY=1.15
+
+# Telegram responses (conversational)
+TELEGRAM_TEMPERATURE=0.7
+TELEGRAM_TOP_P=0.9
+TELEGRAM_MAX_TOKENS=512
+TELEGRAM_REPETITION_PENALTY=1.1
+```
+
+### Mailserver Customization
+
+```yaml
+# Advanced mailserver settings in docker-compose.yml
+environment:
+  - ENABLE_RSPAMD=1      # Spam filtering
+  - ENABLE_CLAMAV=1      # Virus scanning
+  - ENABLE_FAIL2BAN=1    # Intrusion prevention
+  - SSL_TYPE=self-signed # SSL configuration
+  - PERMIT_DOCKER=network # Docker networking
+```
+
+## 📊 Monitoring & Logs
+
+### View Logs
+
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f mailserver
+docker-compose logs -f telegram-bot
+
+# Application logs
+tail -f logs/mailserver_email_bot.log
+tail -f logs/telegram_bot.log
+```
+
+### Health Checks
+
+```bash
+# Check service status
+docker-compose ps
+
+# Check resource usage
+docker stats
+
+# Test email connectivity
+docker-compose exec telegram-bot python -c "
+import imaplib
+import ssl
+mail = imaplib.IMAP4_SSL('mailserver', 993)
+mail.login('bot@yourdomain.com', 'password')
+print('IMAP connection successful')
+"
+```
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+1. **Mailserver not starting**
+   ```bash
+   # Check DNS configuration
+   nslookup mail.yourdomain.com
+   
+   # Check docker logs
+   docker-compose logs mailserver
+   ```
+
+2. **AI model not loading**
+   ```bash
+   # Check GPU availability
+   docker-compose exec telegram-bot python -c "
+   import torch
+   print('CUDA available:', torch.cuda.is_available())
+   "
+   ```
+
+3. **Email bot not connecting**
+   ```bash
+   # Test IMAP connection
+   docker-compose exec telegram-bot python -c "
+   import imaplib
+   import ssl
+   mail = imaplib.IMAP4_SSL('mailserver', 993)
+   mail.login('bot@yourdomain.com', 'password')
+   print('IMAP connection successful')
+   "
+   ```
+
+### Performance Issues
+
+```bash
+# Check memory usage
+free -h
+
+# Check disk space
+df -h
+
+# Monitor GPU usage
+nvidia-smi
+
+# Optimize Docker
+docker system prune -a
+```
+
+## 🔒 Security
+
+### Email Security
+- **SSL/TLS Encryption**: All email communications encrypted
+- **Authentication**: Strong password requirements
+- **Anti-spam**: Built-in spam filtering and virus scanning
+- **Fail2ban**: Intrusion prevention and rate limiting
+
+### AI Security
+- **Input Validation**: Sanitized user inputs
+- **Rate Limiting**: Prevents abuse and resource exhaustion
+- **Error Handling**: Graceful error responses without data leakage
+- **Audit Logging**: Comprehensive logging for security monitoring
+
+## 📈 Performance Optimization
+
+### GPU Optimization
+
+```bash
+# Check GPU memory
+nvidia-smi
+
+# Optimize CUDA memory allocation
+export CUDA_VISIBLE_DEVICES=0
+export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
+```
+
+### Memory Management
+
+```bash
+# Monitor memory usage
+docker stats
+
+# Adjust container resources
+deploy:
+  resources:
+    limits:
+      memory: 8G
+    reservations:
+      memory: 4G
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Mistral AI**: For the base Mistral 7B model
+- **Docker-Mailserver**: For the excellent mail server solution
+- **Hugging Face**: For model hosting and fine-tuning tools
+- **French Labor Law Community**: For domain expertise
 
 ## 📞 Support
 
-- **Documentation** : Guides complets dans le repository
-- **Issues** : [GitHub Issues](https://github.com/Pyzeur-ColonyLab/Code-du-Travail/issues)
-- **Logs** : `tail -f bot.log` pour diagnostic
+For support and questions:
 
-## ⚠️ Avertissement
-
-Cet assistant fournit des informations à titre informatif uniquement. Pour des conseils juridiques précis concernant le Code du Travail, consultez un avocat spécialisé en droit du travail.
+1. Check the [DOCKER_MAILSERVER_SETUP.md](DOCKER_MAILSERVER_SETUP.md) for detailed setup instructions
+2. Review the troubleshooting section above
+3. Check the logs for error messages
+4. Open an issue on GitHub
 
 ---
 
-**🏗️ Développé par Pyzeur - ColonyLab**  
-**🤖 Modèle**: [Code-du-Travail-mistral-finetune](https://huggingface.co/Pyzeur/Code-du-Travail-mistral-finetune)
+**Made with ❤️ for the French labor law community**
+
+*This AI assistant provides informational responses only. For legal advice, please consult a qualified attorney.*

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
-Alternative runner script for the Telegram bot with additional features
+Universal runner script for Code du Travail bots with additional features
+Supports running Telegram bot, Email bot, or both simultaneously
 """
 
 import sys
 import os
 import argparse
+import threading
+import time
+import signal
 from pathlib import Path
 
 # Add current directory to Python path
@@ -58,18 +62,79 @@ def check_dependencies():
         print("Please install requirements: pip install -r requirements.txt")
         sys.exit(1)
 
+def run_telegram_bot():
+    """Run the Telegram bot"""
+    try:
+        from telegram_bot import main as run_telegram_bot
+        run_telegram_bot()
+    except Exception as e:
+        print(f"❌ Error running Telegram bot: {e}")
+        raise
+
+def run_email_bot():
+    """Run the Email bot"""
+    try:
+        from mailserver_email_bot import main as run_email_bot
+        run_email_bot()
+    except Exception as e:
+        print(f"❌ Error running Email bot: {e}")
+        raise
+
+def run_both_bots():
+    """Run both bots simultaneously"""
+    print("🚀 Starting both Telegram and Email bots...")
+    
+    # Create threads for both bots
+    telegram_thread = threading.Thread(target=run_telegram_bot, name="TelegramBot")
+    email_thread = threading.Thread(target=run_email_bot, name="EmailBot")
+    
+    # Set threads as daemon so they stop when main program stops
+    telegram_thread.daemon = True
+    email_thread.daemon = True
+    
+    # Start both threads
+    telegram_thread.start()
+    print("✅ Telegram bot started")
+    
+    # Wait a bit before starting email bot
+    time.sleep(2)
+    
+    email_thread.start()
+    print("✅ Email bot started")
+    
+    try:
+        # Keep main thread alive
+        while True:
+            if not telegram_thread.is_alive():
+                print("⚠️ Telegram bot thread stopped")
+                break
+            if not email_thread.is_alive():
+                print("⚠️ Email bot thread stopped")
+                break
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n👋 Stopping both bots...")
+    
+    # Wait for threads to finish
+    telegram_thread.join(timeout=5)
+    email_thread.join(timeout=5)
+
 def main():
-    parser = argparse.ArgumentParser(description='Code du Travail Telegram Bot')
+    parser = argparse.ArgumentParser(description='Code du Travail AI Bots')
     parser.add_argument('--check', action='store_true', help='Check dependencies and configuration')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+    parser.add_argument('--mode', choices=['telegram', 'email', 'both'], default='both',
+                        help='Bot mode: telegram only, email only, or both (default: both)')
     
     args = parser.parse_args()
     
     if args.debug:
         os.environ['LOG_LEVEL'] = 'DEBUG'
+        os.environ['EMAIL_LOG_LEVEL'] = 'DEBUG'
     
-    print("🤖 Code du Travail Telegram Bot")
-    print("==============================")
+    print("🤖 Code du Travail AI Bots")
+    print("==========================")
+    print(f"Mode: {args.mode}")
     
     # Setup environment
     setup_environment()
@@ -81,16 +146,27 @@ def main():
         print("✅ All checks passed!")
         return
     
-    print("🚀 Starting bot...")
+    # Setup signal handlers for graceful shutdown
+    def signal_handler(signum, frame):
+        print(f"\n👋 Received signal {signum}, shutting down...")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
     
     try:
-        # Import and run the bot
-        from telegram_bot import main as run_bot
-        run_bot()
+        if args.mode == 'telegram':
+            print("🚀 Starting Telegram bot only...")
+            run_telegram_bot()
+        elif args.mode == 'email':
+            print("🚀 Starting Email bot only...")
+            run_email_bot()
+        elif args.mode == 'both':
+            run_both_bots()
     except KeyboardInterrupt:
-        print("\n👋 Bot stopped by user")
+        print("\n👋 Bots stopped by user")
     except Exception as e:
-        print(f"❌ Error running bot: {e}")
+        print(f"❌ Error running bots: {e}")
         sys.exit(1)
 
 if __name__ == '__main__':

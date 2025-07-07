@@ -30,5 +30,5 @@ ENV PYTHONUNBUFFERED=1
 # Expose port (if needed for health checks)
 EXPOSE 8000
 
-# Run the bot
-CMD ["python", "telegram_bot.py"]
+# Run the bot using the orchestration script
+CMD ["python", "run.py", "--mode", "both"]
