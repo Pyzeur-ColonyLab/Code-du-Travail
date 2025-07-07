@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # Setup script for docker-mailserver
-# This script helps configure docker-mailserver with email accounts
+# This script helps manage email accounts and aliases
 
 set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
-DMS_CONFIG_DIR="$SCRIPT_DIR/docker-data/dms/config"
+cd "$SCRIPT_DIR"
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
@@ -28,6 +28,13 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+print_step() {
+    echo -e "${BLUE}[STEP]${NC} $1"
+}
+
+# Configuration
+DMS_CONFIG_DIR="$SCRIPT_DIR/docker-data/dms/config"
+
 # Function to check if docker-compose is available
 check_docker_compose() {
     if command -v docker-compose &> /dev/null; then
@@ -40,15 +47,34 @@ check_docker_compose() {
     fi
 }
 
-# Function to check if .env file exists
-check_env_file() {
+# Function to safely load environment variables
+load_env_file() {
     if [ ! -f "$SCRIPT_DIR/.env" ]; then
         print_error ".env file not found. Please create one based on .env.example"
         exit 1
     fi
     
-    # Load environment variables
-    source "$SCRIPT_DIR/.env"
+    # Load environment variables safely by reading line by line
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip empty lines and comments
+        if [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]]; then
+            continue
+        fi
+        
+        # Check if line contains an assignment
+        if [[ "$line" =~ ^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*= ]]; then
+            # Export the variable safely
+            export "$line"
+        fi
+    done < "$SCRIPT_DIR/.env"
+}
+
+# Function to check if .env file exists and validate required variables
+check_env_file() {
+    print_step "Loading environment configuration..."
+    
+    # Load environment variables safely
+    load_env_file
     
     if [ -z "$EMAIL_DOMAIN" ]; then
         print_error "EMAIL_DOMAIN not set in .env file"
@@ -64,6 +90,10 @@ check_env_file() {
         print_error "EMAIL_PASSWORD not set in .env file"
         exit 1
     fi
+    
+    print_info "Configuration validated"
+    print_info "Domain: $EMAIL_DOMAIN"
+    print_info "Email: $EMAIL_ADDRESS"
 }
 
 # Function to create email account
@@ -229,4 +259,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"
