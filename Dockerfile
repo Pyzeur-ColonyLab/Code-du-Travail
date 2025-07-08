@@ -34,8 +34,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p logs cache
+# Create necessary directories with proper permissions
+RUN mkdir -p logs cache && \
+    chmod 755 logs cache
 
 # Set proper permissions
 RUN chmod +x *.sh

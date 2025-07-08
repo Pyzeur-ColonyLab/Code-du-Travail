@@ -31,14 +31,26 @@ import ssl
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=getattr(logging, os.getenv('EMAIL_LOG_LEVEL', 'INFO')),
-    handlers=[
-        logging.FileHandler('logs/mailserver_email_bot.log'),
-        logging.StreamHandler()
-    ]
-)
+try:
+    # Ensure logs directory exists
+    os.makedirs('logs', exist_ok=True)
+    
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=getattr(logging, os.getenv('EMAIL_LOG_LEVEL', 'INFO')),
+        handlers=[
+            logging.FileHandler('logs/mailserver_email_bot.log'),
+            logging.StreamHandler()
+        ]
+    )
+except Exception as e:
+    # Fallback to console-only logging if file logging fails
+    logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        level=getattr(logging, os.getenv('EMAIL_LOG_LEVEL', 'INFO')),
+        handlers=[logging.StreamHandler()]
+    )
+    print(f"⚠️ Could not setup file logging: {e}")
 logger = logging.getLogger(__name__)
 
 class MailserverEmailBot:

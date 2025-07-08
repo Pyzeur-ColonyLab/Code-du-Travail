@@ -43,6 +43,22 @@ def setup_environment():
     else:
         print("✅ Configuration validated")
 
+def setup_directories():
+    """Create necessary directories with proper permissions"""
+    # Create logs directory
+    logs_dir = Path('logs')
+    logs_dir.mkdir(exist_ok=True)
+    
+    # Create cache directory
+    cache_dir = Path('cache')
+    cache_dir.mkdir(exist_ok=True)
+    
+    # Set proper permissions (readable/writable by all)
+    logs_dir.chmod(0o755)
+    cache_dir.chmod(0o755)
+    
+    print("✅ Directories created with proper permissions")
+
 def check_dependencies():
     """Check if required dependencies are installed"""
     try:
@@ -66,11 +82,20 @@ def check_dependencies():
 def run_telegram_bot():
     """Run the Telegram bot with proper asyncio setup"""
     try:
-        from telegram_bot import run_bot
-        run_bot()
+        # Create new event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        from telegram_bot import main
+        loop.run_until_complete(main())
     except Exception as e:
         print(f"❌ Error running Telegram bot: {e}")
         raise
+    finally:
+        try:
+            loop.close()
+        except:
+            pass
 
 def run_email_bot():
     """Run the Email bot"""
@@ -139,6 +164,9 @@ def main():
     
     # Setup environment
     setup_environment()
+    
+    # Setup directories
+    setup_directories()
     
     # Check dependencies
     check_dependencies()
