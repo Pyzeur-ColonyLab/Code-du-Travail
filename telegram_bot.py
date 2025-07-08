@@ -365,7 +365,13 @@ def main() -> None:
     
     # Start the bot
     logger.info("Starting optimized Telegram bot...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    
+    # Run the bot with proper asyncio handling
+    try:
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
+    except Exception as e:
+        logger.error(f"Error running Telegram bot: {e}")
+        raise
 
 if __name__ == '__main__':
     main()
