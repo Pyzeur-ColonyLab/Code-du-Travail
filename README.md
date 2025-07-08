@@ -3,6 +3,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Required-blue.svg)](https://www.docker.com/)
 [![Python](https://img.shields.io/badge/Python-3.10+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-1.0.0-blue.svg)](https://github.com/Pyzeur-ColonyLab/Code-du-Travail/releases)
 
 > **Intelligent AI Assistant for French Labor Law** - Powered by fine-tuned Mistral 7B model
 

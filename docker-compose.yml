@@ -32,6 +32,15 @@ services:
     #         - driver: nvidia
     #           count: 1
     #           capabilities: [gpu]
+    # Resource limits for stability
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
     stdin_open: true
     tty: true
 
@@ -61,6 +70,7 @@ services:
       - POSTMASTER_ADDRESS=postmaster@${EMAIL_DOMAIN}
       - SSL_TYPE=letsencrypt
       - PERMIT_DOCKER=network
+      - SPOOF_PROTECTION=1
       - ENABLE_SRS=1
       - ONE_DIR=1
       - DMS_DEBUG=0

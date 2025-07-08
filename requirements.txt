@@ -12,3 +12,5 @@ protobuf>=3.20.0
 peft>=0.6.0
 email-validator>=2.1.0
 secure-smtplib>=0.1.1
+imaplib2>=3.6
+requests>=2.31.0
