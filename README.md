@@ -50,10 +50,34 @@ cd Code-du-Travail
 ```
 
 ### 2. Setup Environment (Debian 11)
+
+#### Option A: Interactive Setup (Recommended)
+```bash
+# Download and run the quick setup script
+curl -fsSL https://raw.githubusercontent.com/Pyzeur-ColonyLab/Code-du-Travail/main/quick_setup.sh | bash
+
+# Or download and run manually
+wget https://raw.githubusercontent.com/Pyzeur-ColonyLab/Code-du-Travail/main/quick_setup.sh
+chmod +x quick_setup.sh
+./quick_setup.sh
+```
+
+#### Option B: Manual Setup
 ```bash
 # Run comprehensive Debian setup
 chmod +x setup_debian.sh
 ./setup_debian.sh
+```
+
+#### Option C: Interactive Setup (After cloning)
+```bash
+# Clone repository first
+git clone https://github.com/Pyzeur-ColonyLab/Code-du-Travail.git
+cd Code-du-Travail
+
+# Run interactive setup
+chmod +x interactive_setup.sh
+./interactive_setup.sh
 ```
 
 ### 3. Configure Environment
