@@ -59,8 +59,7 @@ services:
       - ./docker-data/dms/mail-state/:/var/mail-state/
       - ./docker-data/dms/mail-logs/:/var/log/mail/
       - ./docker-data/dms/config/:/tmp/docker-mailserver/
-      - /etc/letsencrypt/live/mail.cryptomaltese.com/fullchain.pem:/tmp/docker-mailserver/ssl/mail.cryptomaltese.com-cert.pem:ro
-      - /etc/letsencrypt/live/mail.cryptomaltese.com/privkey.pem:/tmp/docker-mailserver/ssl/mail.cryptomaltese.com-key.pem:ro
+      - /etc/letsencrypt:/etc/letsencrypt
       - /etc/localtime:/etc/localtime:ro
     environment:
       - ENABLE_RSPAMD=1
@@ -70,7 +69,6 @@ services:
       - ENABLE_MANAGESIEVE=1
       - POSTMASTER_ADDRESS=postmaster@${EMAIL_DOMAIN}
       - SSL_TYPE=letsencrypt
-      - LETSENCRYPT_DOMAIN=mail.cryptomaltese.com
       - PERMIT_DOCKER=network
       - SPOOF_PROTECTION=1
       - ENABLE_SRS=1
