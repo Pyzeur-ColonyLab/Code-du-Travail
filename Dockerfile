@@ -8,8 +8,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies with retry mechanism and DNS workaround
+# Install system dependencies with offline-first approach
 RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt/lists \
     apt-get update --fix-missing || true && \
     apt-get install -y --no-install-recommends \
     git \
@@ -18,8 +19,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     build-essential \
     ca-certificates \
     gnupg \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
