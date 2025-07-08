@@ -1,0 +1,28 @@
+# Docker
+docker-data/
+.dockerignore
+
+# Exclude docker-data from build context to avoid permission issues
+docker-data/
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Cache
+cache/
+.cache/
+
+# OS files
+.DS_Store
+._*
+Thumbs.db 
