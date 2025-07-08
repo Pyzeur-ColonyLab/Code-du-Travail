@@ -349,7 +349,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     """Log errors caused by Updates."""
     logger.error(f"Update {update} caused error {context.error}")
 
-def main() -> None:
+async def main() -> None:
     """Start the bot."""
     # Create the Application
     application = Application.builder().token(bot_instance.telegram_token).build()
@@ -368,10 +368,14 @@ def main() -> None:
     
     # Run the bot with proper asyncio handling
     try:
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
+        await application.run_polling(allowed_updates=Update.ALL_TYPES, stop_signals=None)
     except Exception as e:
         logger.error(f"Error running Telegram bot: {e}")
         raise
+
+def run_bot():
+    """Run the bot with asyncio"""
+    asyncio.run(main())
 
 if __name__ == '__main__':
     main()
