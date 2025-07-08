@@ -66,12 +66,8 @@ def check_dependencies():
 def run_telegram_bot():
     """Run the Telegram bot with proper asyncio setup"""
     try:
-        # Set up asyncio event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        from telegram_bot import main as run_telegram_bot
-        run_telegram_bot()
+        from telegram_bot import run_bot
+        run_bot()
     except Exception as e:
         print(f"❌ Error running Telegram bot: {e}")
         raise
