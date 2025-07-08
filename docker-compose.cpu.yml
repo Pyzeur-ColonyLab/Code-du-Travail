@@ -70,7 +70,7 @@ services:
       - ENABLE_MANAGESIEVE=1
       - POSTMASTER_ADDRESS=postmaster@${EMAIL_DOMAIN}
       - SSL_TYPE=letsencrypt
-      - LETSENCRYPT_DOMAIN=${LETSENCRYPT_DOMAIN:-mail.cryptomaltese.com}
+      - LETSENCRYPT_DOMAIN=mail.cryptomaltese.com
       - PERMIT_DOCKER=network
       - SPOOF_PROTECTION=1
       - ENABLE_SRS=1
