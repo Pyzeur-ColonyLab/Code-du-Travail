@@ -8,10 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies with retry mechanism and better error handling
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
-    apt-get update --fix-missing || true && \
+# Install system dependencies with better error handling and retry mechanism
+RUN apt-get update --fix-missing || true && \
     apt-get install -y --no-install-recommends \
     git \
     wget \
