@@ -181,6 +181,7 @@ yourdomain.com.         IN  TXT     "v=spf1 mx ~all"
 
 ### Management Commands
 
+#### For GPU Instances (Default)
 ```bash
 # Start all services
 ./start_mailserver_bot.sh start
@@ -199,6 +200,24 @@ yourdomain.com.         IN  TXT     "v=spf1 mx ~all"
 
 # Setup email accounts
 ./start_mailserver_bot.sh setup
+```
+
+#### For CPU-Only Instances
+```bash
+# Start services with CPU optimization
+./start_cpu.sh
+
+# Or manually with CPU compose file
+docker-compose -f docker-compose.cpu.yml up -d
+
+# Check status
+docker-compose -f docker-compose.cpu.yml ps
+
+# View logs
+docker-compose -f docker-compose.cpu.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.cpu.yml down
 ```
 
 ### Bot Modes

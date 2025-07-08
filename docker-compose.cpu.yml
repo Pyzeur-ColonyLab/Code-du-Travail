@@ -1,3 +1,6 @@
+# CPU-optimized Docker Compose for Code du Travail AI Assistant
+# Use this file for CPU-only instances: docker-compose -f docker-compose.cpu.yml up -d
+
 services:
   telegram-bot:
     build: .
@@ -6,7 +9,7 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - MODEL_NAME=${MODEL_NAME:-Pyzeur/Code-du-Travail-mistral-finetune}
-      - DEVICE=${DEVICE:-auto}
+      - DEVICE=cpu  # Force CPU usage
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - HUGGING_FACE_TOKEN=${HUGGING_FACE_TOKEN}
       # Email settings for docker-mailserver
@@ -17,6 +20,11 @@ services:
       - IMAP_PORT=993
       - SMTP_HOST=mailserver
       - SMTP_PORT=587
+      # CPU optimization settings
+      - USE_QUANTIZATION=true
+      - LOAD_IN_4BIT=true
+      - EMAIL_MAX_TOKENS=1000  # Reduced for CPU
+      - TELEGRAM_MAX_TOKENS=256  # Reduced for CPU
     volumes:
       - ./logs:/app/logs
       - ./cache:/root/.cache  # For model caching
@@ -24,14 +32,15 @@ services:
       - mailserver
     networks:
       - mail-network
-    # GPU configuration - uncomment only if NVIDIA GPU is available
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    # CPU resource limits for better performance
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
     stdin_open: true
     tty: true
 
@@ -73,4 +82,4 @@ services:
 
 networks:
   mail-network:
-    driver: bridge
+    driver: bridge 

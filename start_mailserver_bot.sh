@@ -44,6 +44,28 @@ check_docker_compose() {
     fi
 }
 
+# Function to detect GPU availability and choose appropriate compose file
+detect_gpu_and_choose_compose() {
+    print_step "Detecting GPU availability..."
+    
+    # Check if NVIDIA GPU is available
+    if command -v nvidia-smi &> /dev/null && nvidia-smi &> /dev/null; then
+        print_info "NVIDIA GPU detected - using GPU-optimized configuration"
+        COMPOSE_FILE="docker-compose.yml"
+        DEVICE_MODE="gpu"
+    else
+        print_warning "No NVIDIA GPU detected - using CPU-optimized configuration"
+        COMPOSE_FILE="docker-compose.cpu.yml"
+        DEVICE_MODE="cpu"
+        
+        # Update DOCKER_COMPOSE_CMD to use CPU-specific file
+        DOCKER_COMPOSE_CMD="$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE"
+    fi
+    
+    print_info "Using compose file: $COMPOSE_FILE"
+    print_info "Device mode: $DEVICE_MODE"
+}
+
 # Function to safely load environment variables
 load_env_file() {
     if [ ! -f ".env" ]; then
@@ -202,6 +224,7 @@ main() {
     print_info "=============================================="
     
     check_docker_compose
+    detect_gpu_and_choose_compose
     check_env_file
     create_directories
     
