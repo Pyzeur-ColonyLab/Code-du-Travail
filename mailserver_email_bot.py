@@ -26,23 +26,35 @@ import threading
 import re
 import hashlib
 import ssl
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
 
 # Configure logging
 try:
-    # Ensure logs directory exists
-    os.makedirs('logs', exist_ok=True)
+    # Ensure logs directory exists with proper permissions
+    logs_dir = Path('logs')
+    logs_dir.mkdir(exist_ok=True)
+    
+    # Try to set permissions if we can
+    try:
+        logs_dir.chmod(0o755)
+    except:
+        pass  # Ignore permission errors here
+    
+    # Try to create log file with proper permissions
+    log_file = logs_dir / 'mailserver_email_bot.log'
     
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=getattr(logging, os.getenv('EMAIL_LOG_LEVEL', 'INFO')),
         handlers=[
-            logging.FileHandler('logs/mailserver_email_bot.log'),
+            logging.FileHandler(log_file),
             logging.StreamHandler()
         ]
     )
+    print(f"✅ File logging enabled: {log_file}")
 except Exception as e:
     # Fallback to console-only logging if file logging fails
     logging.basicConfig(
@@ -51,6 +63,7 @@ except Exception as e:
         handlers=[logging.StreamHandler()]
     )
     print(f"⚠️ Could not setup file logging: {e}")
+    print("📝 Using console-only logging")
 logger = logging.getLogger(__name__)
 
 class MailserverEmailBot:

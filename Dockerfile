@@ -36,7 +36,8 @@ COPY . .
 
 # Create necessary directories with proper permissions
 RUN mkdir -p logs cache && \
-    chmod 755 logs cache
+    chmod 755 logs cache && \
+    chown appuser:appuser logs cache
 
 # Set proper permissions
 RUN chmod +x *.sh

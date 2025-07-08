@@ -45,19 +45,36 @@ def setup_environment():
 
 def setup_directories():
     """Create necessary directories with proper permissions"""
-    # Create logs directory
-    logs_dir = Path('logs')
-    logs_dir.mkdir(exist_ok=True)
-    
-    # Create cache directory
-    cache_dir = Path('cache')
-    cache_dir.mkdir(exist_ok=True)
-    
-    # Set proper permissions (readable/writable by all)
-    logs_dir.chmod(0o755)
-    cache_dir.chmod(0o755)
-    
-    print("✅ Directories created with proper permissions")
+    try:
+        # Create logs directory
+        logs_dir = Path('logs')
+        logs_dir.mkdir(exist_ok=True)
+        
+        # Create cache directory
+        cache_dir = Path('cache')
+        cache_dir.mkdir(exist_ok=True)
+        
+        # Try to set proper permissions (readable/writable by all)
+        try:
+            logs_dir.chmod(0o777)  # More permissive for Docker
+            cache_dir.chmod(0o777)
+        except Exception as e:
+            print(f"⚠️ Could not set directory permissions: {e}")
+        
+        # Try to create a test file to verify write permissions
+        test_file = logs_dir / 'test_write.tmp'
+        try:
+            test_file.write_text('test')
+            test_file.unlink()  # Clean up
+            print("✅ Directory permissions verified")
+        except Exception as e:
+            print(f"⚠️ Write permission test failed: {e}")
+            print("📝 Will use console-only logging if needed")
+        
+        print("✅ Directories created")
+    except Exception as e:
+        print(f"⚠️ Error setting up directories: {e}")
+        print("📝 Continuing with basic setup")
 
 def check_dependencies():
     """Check if required dependencies are installed"""
@@ -93,6 +110,15 @@ def run_telegram_bot():
         raise
     finally:
         try:
+            # Cancel all tasks before closing
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            
+            # Wait for tasks to be cancelled
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            
             loop.close()
         except:
             pass
@@ -145,9 +171,33 @@ def run_both_bots():
     telegram_thread.join(timeout=5)
     email_thread.join(timeout=5)
 
+def check_health():
+    """Simple health check"""
+    try:
+        # Check if directories exist
+        logs_dir = Path('logs')
+        cache_dir = Path('cache')
+        
+        health_status = {
+            'status': 'healthy',
+            'directories': {
+                'logs': logs_dir.exists(),
+                'cache': cache_dir.exists()
+            },
+            'permissions': {
+                'logs_writable': os.access(logs_dir, os.W_OK) if logs_dir.exists() else False,
+                'cache_writable': os.access(cache_dir, os.W_OK) if cache_dir.exists() else False
+            }
+        }
+        
+        return health_status
+    except Exception as e:
+        return {'status': 'unhealthy', 'error': str(e)}
+
 def main():
     parser = argparse.ArgumentParser(description='Code du Travail AI Bots')
     parser.add_argument('--check', action='store_true', help='Check dependencies and configuration')
+    parser.add_argument('--health', action='store_true', help='Run health check')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--mode', choices=['telegram', 'email', 'both'], default='both',
                         help='Bot mode: telegram only, email only, or both (default: both)')
@@ -175,6 +225,11 @@ def main():
         print("✅ All checks passed!")
         return
     
+    if args.health:
+        health = check_health()
+        print(f"Health check: {health}")
+        return
+    
     # Setup signal handlers for graceful shutdown
     def signal_handler(signum, frame):
         print(f"\n👋 Received signal {signum}, shutting down...")
@@ -196,6 +251,8 @@ def main():
         print("\n👋 Bots stopped by user")
     except Exception as e:
         print(f"❌ Error running bots: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == '__main__':

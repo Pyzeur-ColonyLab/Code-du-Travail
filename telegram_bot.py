@@ -373,9 +373,5 @@ async def main() -> None:
         logger.error(f"Error running Telegram bot: {e}")
         raise
 
-def run_bot():
-    """Run the bot with asyncio"""
-    asyncio.run(main())
-
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
