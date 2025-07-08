@@ -100,6 +100,13 @@ cp .env.example .env
 
 ### Environment Variables
 
+A comprehensive `.env.example` file is provided with all configuration options. Copy it to create your configuration:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
 #### Required Settings
 ```bash
 # Telegram Bot
@@ -129,6 +136,8 @@ EMAIL_CHECK_INTERVAL=30        # Check emails every 30 seconds
 TELEGRAM_MAX_TOKENS=512        # Shorter responses for chat
 TELEGRAM_TEMPERATURE=0.7       # More conversational
 ```
+
+> **Note**: The `.env.example` file contains detailed documentation for all configuration options, including advanced settings for Cloudflare DNS, OpenStack/Infomaniak integration, Docker configuration, and more.
 
 ### DNS Configuration
 
