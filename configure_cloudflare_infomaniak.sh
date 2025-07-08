@@ -95,12 +95,16 @@ echo "[SUCCESS] Created docker-compose.override.yml for Infomaniak compatibility
 echo "[STEP] DNS optimization for Cloudflare..."
 
 # Run the DNS fix script
-if [ -f fix_ubuntu_dns.sh ]; then
-    echo "[INFO] Running DNS optimization for Cloudflare..."
+if [ -f fix_debian_dns.sh ]; then
+    echo "[INFO] Running Debian DNS optimization for Cloudflare..."
+    chmod +x fix_debian_dns.sh
+    ./fix_debian_dns.sh
+elif [ -f fix_ubuntu_dns.sh ]; then
+    echo "[INFO] Running Ubuntu DNS optimization for Cloudflare (fallback)..."
     chmod +x fix_ubuntu_dns.sh
     ./fix_ubuntu_dns.sh
 else
-    echo "[WARNING] fix_ubuntu_dns.sh not found"
+    echo "[WARNING] No DNS fix script found"
 fi
 
 echo "[INFO] Configuration completed!"

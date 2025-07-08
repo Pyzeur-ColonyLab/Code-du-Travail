@@ -1,0 +1,28 @@
+# Hybrid Development Rule
+
+## Environment Priority
+- **Always consider the instance environment** as the primary development environment
+- Treat local environment as secondary/supporting environment
+- All development decisions should prioritize instance compatibility
+
+## Development Guidelines
+- When making code changes, consider how they will work on the instance
+- Use instance-specific configurations and paths when applicable
+- Test and validate changes against instance environment requirements
+- Consider instance limitations and constraints in development decisions
+
+## File and Path Considerations
+- Use relative paths that work on both local and instance
+- Consider instance file system structure and permissions
+- Account for instance-specific environment variables and configurations
+
+## Deployment and Testing
+- Prioritize instance deployment workflows
+- Test functionality in instance-like environments
+- Consider instance performance and resource constraints
+
+globs:
+alwaysApply: false
+---
+
+- Considere instance

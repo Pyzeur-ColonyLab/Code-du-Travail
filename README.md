@@ -37,6 +37,7 @@ A comprehensive AI system that provides expert assistance on French labor law th
 
 ### Prerequisites
 
+- **Debian 11 (Bullseye)** or compatible system
 - **Docker & Docker Compose**
 - **Domain name** (for email functionality)
 - **NVIDIA GPU** (recommended for optimal performance)
@@ -45,21 +46,28 @@ A comprehensive AI system that provides expert assistance on French labor law th
 ### 1. Clone Repository
 ```bash
 git clone https://github.com/Pyzeur-ColonyLab/Code-du-Travail.git
-cd code-du-travail-ai
+cd Code-du-Travail
 ```
 
-### 2. Configure Environment
+### 2. Setup Environment (Debian 11)
+```bash
+# Run comprehensive Debian setup
+chmod +x setup_debian.sh
+./setup_debian.sh
+```
+
+### 3. Configure Environment
 ```bash
 cp .env.example .env
 # Edit .env with your settings
 ```
 
-### 3. Start Services
+### 4. Start Services
 ```bash
 ./start_mailserver_bot.sh start
 ```
 
-### 4. Setup Email Accounts
+### 5. Setup Email Accounts
 ```bash
 ./start_mailserver_bot.sh setup
 ```
@@ -219,6 +227,11 @@ openstack security group rule create --dst-port 22 --protocol TCP mailserver-sec
 ### Performance Optimization
 
 ```bash
+# Run Debian optimization script
+chmod +x debian_optimize.sh
+./debian_optimize.sh
+
+# Or manually:
 # Update system
 sudo apt update && sudo apt upgrade -y
 

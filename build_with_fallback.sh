@@ -40,6 +40,8 @@ mv Dockerfile.backup Dockerfile
 mv Dockerfile.alternative.backup Dockerfile.alternative
 
 echo "[INFO] Please run the DNS fix script first:"
+echo "chmod +x fix_debian_dns.sh"
+echo "./fix_debian_dns.sh"
 echo "chmod +x fix_ubuntu_dns.sh"
 echo "./fix_ubuntu_dns.sh"
 exit 1 

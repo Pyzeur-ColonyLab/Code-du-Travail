@@ -219,6 +219,18 @@ mkdir -p logs
 # Make scripts executable
 chmod +x *.sh
 
+# Run Debian optimization if available
+if [ -f debian_optimize.sh ]; then
+    echo "Running Debian optimization..."
+    ./debian_optimize.sh
+fi
+
+# Run DNS fix if available
+if [ -f fix_debian_dns.sh ]; then
+    echo "Running Debian DNS fix..."
+    ./fix_debian_dns.sh
+fi
+
 echo "Application deployment completed!"
 EOF
     
